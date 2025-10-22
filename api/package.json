@@ -1,6 +1,6 @@
 {
   "name": "@flock/api",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
   "description": "Fastify API server orchestrating Flock agent workflows.",

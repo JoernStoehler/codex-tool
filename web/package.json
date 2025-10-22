@@ -1,6 +1,6 @@
 {
   "name": "@flock/web",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
   "description": "Flock web console for monitoring agent orchestration.",

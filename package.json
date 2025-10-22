@@ -1,6 +1,6 @@
 {
   "name": "flock",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "private": true,
   "description": "Flock orchestrates Codex agents, humans, and automation surfaces via API, CLI, and web clients.",
   "type": "module",

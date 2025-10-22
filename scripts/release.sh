@@ -53,10 +53,30 @@ if git rev-parse "$TAG" >/dev/null 2>&1; then
 fi
 
 echo "Updating package versions to $VERSION..."
-npm version "$VERSION" --no-git-tag-version
-npm version "$VERSION" --workspace api --no-git-tag-version
-npm version "$VERSION" --workspace cli --no-git-tag-version
-npm version "$VERSION" --workspace web --no-git-tag-version
+update_version() {
+  local label="$1"
+  local workspace="$2"
+  local pkg_path="$3"
+
+  local current
+  current="$(node -e "const pkg = require('${pkg_path}'); console.log(pkg.version ?? '')")"
+
+  if [[ "$current" == "$VERSION" ]]; then
+    echo "$label already at $VERSION; skipping."
+    return
+  fi
+
+  if [[ "$workspace" == "root" ]]; then
+    npm version "$VERSION" --workspaces=false --no-git-tag-version
+  else
+    npm version "$VERSION" --workspace "$workspace" --no-git-tag-version
+  fi
+}
+
+update_version "Root workspace" "root" "$ROOT_DIR/package.json"
+update_version "@flock/api" "api" "$ROOT_DIR/api/package.json"
+update_version "@flock/cli" "cli" "$ROOT_DIR/cli/package.json"
+update_version "@flock/web" "web" "$ROOT_DIR/web/package.json"
 
 echo "Running lint..."
 npm run lint --workspaces
