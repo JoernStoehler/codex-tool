@@ -1,0 +1,46 @@
+{
+  "name": "flock",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Flock orchestrates Codex agents, humans, and automation surfaces via API, CLI, and web clients.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "npm@9.8.1",
+  "scripts": {
+    "dev:api": "npm run dev --workspace api",
+    "dev:cli": "npm run dev --workspace cli",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
+    "format": "npm run format --workspaces",
+    "clean": "npm run clean --workspaces",
+    "link:cli": "npm link --workspace cli",
+    "cli": "node --import tsx cli/src/index.ts",
+    "release": "./scripts/release.sh"
+  },
+  "workspaces": [
+    "api",
+    "cli",
+    "web"
+  ],
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@typescript-eslint/eslint-plugin": "^8.8.1",
+    "@typescript-eslint/parser": "^8.8.1",
+    "eslint": "^9.11.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-jsdoc": "^48.11.0",
+    "eslint-plugin-promise": "^6.6.0",
+    "prettier": "^3.3.3",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.46.2",
+    "vitest": "^2.1.4"
+  }
+}
