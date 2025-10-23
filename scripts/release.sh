@@ -8,7 +8,9 @@ Usage: scripts/release.sh <version>
 Prepares a Flock release by ensuring the repository is ready, updating version
 numbers, running checks, copying the development spec to the stable snapshot,
 tagging the commit, and building artifacts. Must be executed from the repository
-root.
+root. Version numbers follow Semantic Versioning with compatibility measured
+against the CLI and web user experience (MAJOR = breaking changes, MINOR =
+backwards-compatible features, PATCH = compatible fixes/polish).
 
 Example:
   scripts/release.sh 0.1.0

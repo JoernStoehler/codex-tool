@@ -152,6 +152,9 @@ implemented.
 
 ## 6. Release process
 
+- Releases follow Semantic Versioning measured against the CLI and web user experience:
+  bump `MAJOR` for breaking changes to those surfaces, `MINOR` for backwards-compatible
+  feature drops, and `PATCH` for compatible fixes or polish.
 - Development spec (`flock.md`) tracks current branch.
 - Use `npm run release <version>` to verify a clean `main` branch, run lint/tests/build,
   sync `flock-stable.md`, and create an annotated tag (`v<version>`).

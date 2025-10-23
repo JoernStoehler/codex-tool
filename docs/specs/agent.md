@@ -23,7 +23,7 @@ and prompt queues. It supplements `flock.md` with deeper operational rules.
 |-------|-------------|---------------------|-------|
 | `idle` | No active turn; prompt queue may start a new turn automatically. | → `running`, `paused`, `deleted` | Default state after creation. |
 | `running` | Turn in progress; agent producing items. | → `idle` (natural completion), `paused` (after interrupt), `deleted` (disallowed) | Interrupt required to exit early. |
-| `paused` | Prompt queue suspended; no turns start automatically. | → `idle` (resume), `running` (manual turn), `deleted` | Queue mutations allowed. |
+| `paused` | Prompt queue suspended; no turns start automatically. | → `idle` (resume), `running` (disallowed; use queue mutation and resume), `deleted` | Queue mutations allowed. |
 | `deleted` | Worktree removed; agent retained for audit. | — | Terminal state. |
 
 Transitions must acquire the per-agent lock. Illegal transitions result in
@@ -32,57 +32,61 @@ Transitions must acquire the per-agent lock. Illegal transitions result in
 ### 2.2 Turn lifecycle
 
 1. **Start**: Prompt delivered (from queue or manual). Agent enters `running`.
-2. **Item emission**: Each item is appended atomically to the thread log. Persistence
-   must guarantee no partial writes (use journaling or transactional storage).
+2. **Item emission**: Each item is appended atomically to the thread log. Handled by Codex SDK.
 3. **Completion**:
-   - **Normal**: Agent emits final message → state returns to `idle` (or `paused` if queue
-     empty and previously paused).
+   - **Normal**: Agent emits final message → state returns to `idle`.
    - **Interrupt**: Server records an `interrupt` item, stops execution, transitions to
-     `paused` (default) and flags the turn as incomplete. Items emitted prior to interrupt
-     remain; partially executing command outputs are truncated but preserved up to the
-     last flush.
+     `paused` and flags the turn as incomplete. Items emitted prior to interrupt remain; partially executed commands may or may not finish and may or may not be recorded as an item, this is undefined behavior of Codex SDK.
 
 ### 2.3 Prompt queue semantics
 
-- FIFO by default; commands may insert at front (`--front`).
+- FIFO, except for mutations.
 - Queue operations allowed in any non-deleted state.
-- When agent transitions to `idle` and queue non-empty and agent not paused, server
-  automatically starts next turn.
-- Queue entries are immutable payloads (text + metadata). Editing replaces the payload and
-  records audit metadata.
+- When agent transitions to `idle` and queue non-empty, server automatically starts next turn.
+- Queue entries are immutable payloads (text + metadata) with uuid handles.
+- Queue operations must acquire the per-agent lock.
 
 ## 3. Worktree ownership
 
-- Feature agents: `git worktree add <path> <sourceBranch>` when created. Branch naming
-  convention: `<agentId>` or `<sourceBranch>--<agentId>` (TBD, define in CLI spec).
-- Main agents: operate directly inside main repository directory; they must `git reset
-  --hard origin/main` when “thrashed.” Worktree deletion is DISALLOWED; instead, commands
-  clean working tree and release locks.
-- Safe delete checks (see `flock.md`): state idle/paused, clean working tree, merged branch.
-- Deletion triggers `git worktree remove` and optional branch deletion (`git branch -D`).
+- Feature agents: `git worktree add <path> <sourceBranch>` when created. Branch naming convention: `flock/<agentId>`.
+- Main agents: operate directly inside main repository directory; Worktree deletion is DISALLOWED; deletion only changes agent status.
+- Safe delete checks (see `flock.md`): state is idle/paused, clean working tree, merged branch. Allows a --force override to ignore merge and working tree state. Running agents CANNOT be deleted.
+- Deletion triggers `git worktree remove` and `git branch -D`. Except on main.
 
 ## 4. Locking
 
-- Lock scope: a process-local mutex protects all state-mutating operations. Initially we
-  serialize the entire critical section (one operation at a time); we may refine this to
-  per-agent locks later.
-- Lock acquisition: `create`, `queue add`, `pause`, `resume`, `delete`, worktree sync,
-  task assignment, and approval flows run under the mutex.
-- Deadlock prevention: because only one lock exists per process, operations never hold
-  multiple locks simultaneously. Multi-agent operations execute sequentially inside the
-  same critical section.
-- Crash behavior: locks do not persist across API restarts. Upon process restart, all
-  locks are considered released. This is acceptable because each operation is expected to
-  complete in under one second.
+- Lock scope: a process-local mutex protects all state-mutating operations. We want to avoid the following edge cases:
+  - simultaneous conflicting operations on an agent's status and queue
+  - simultaneous conflicting operations on the kanban board
+- Deadlock prevention: we run a single API process and rely on one mutex per agent/board.
+- Performance:
+  - API commands are short (millisecond scale), so the lock is not a bottleneck.
+  - Stream endpoints push updates from atomic operations and only take the lock when
+    establishing a stream.
+  - Web and CLI traffic is low-throughput, keeping contention minimal.
+- Crash behavior: locks do not persist across API restarts.
 
 ## 5. Audit & persistence
 
-- Agent registry stores: `agentId`, `slug`, `state`, `sourceBranch`, `worktreePath`,
-  timestamps, `status` (including `deleted`), and reason metadata (who created, paused,
-  deleted).
-- Thread log persists items with monotonic sequence numbers; final message references the
-  associated commit hash (see §6).
-- Deletion retains registry entry with `deletedAt` timestamp and optional `deletedBy`.
+- We store for each agent:
+  - `agentId`: unique random 4 hex, plus slug
+  - `threadId`: from Codex SDK, null until first thread creation
+  - `workingDirectory`: git worktree folder
+  - `workingBranch`: branch name of the git worktree
+  - `status`: `idle | paused | running | deleted` ; note: running -> paused on server start after an unexpected stop where threads weren't interrupted properly
+- Codex SDK stores for each thread:
+  - `threadId`
+  - a list of turns, each turn made from prompt, items, and a final message if completed normally or a final error if interrupted or crashed
+- We store the kanban board's tasks:
+  - `taskId`: unique random 4 hex, plus slugified title
+  - `title`: string
+  - `description`: string
+  - `assignedTo`: null | agentId
+  - `dependsOn`: taskId[]
+  - `status`: `todo | in-progress | in-review | done | deleted`
+- The server logs to a log file, which we can audit
+- We use a simple database for agents + kanban board
+- We trust that Codex CLI / SDK are configured for persistent storage
 
 ## 6. Commit linkage
 
@@ -96,25 +100,22 @@ Transitions must acquire the per-agent lock. Illegal transitions result in
 ## 7. Interrupts & waiting
 
 - Interrupts are explicit operations (`flock agent interrupt` or API). They:
-  1. Append `interrupt` item with reason.
-  2. Soft-abort running command (SIGINT) with timeout fallback (SIGTERM).
-  3. Transition agent to `paused` unless `--resume` flag provided.
-- Wait operations (`flock wait …`) must accept `--timeout <seconds>`; on timeout, agent
-  receives a `timeout` item and resumes control. Interrupting during wait aborts the entire
-  turn.
+  1. Abort the running turn, and the running command in the turn
+  2. Transition agent to `paused`.
+- Wait operations (`flock wait …`) expect `--timeout <seconds>`; on timeout, the CLI
+  prints a warning and returns control to the caller. Interrupting during wait aborts the
+  entire turn, as with any command.
 
-## 8. Error handling
+## 8. Error and output handling
 
-- Any failure that leaves the worktree dirty must be reported with actionable guidance
-  (e.g., `git status` snippet, suggested cleanup command).
-- Locks are released on error before returning response; if release fails, server emits
-  alert and marks agent `paused` with `lockRecoveryRequired` flag.
+- Codex SDK handles command errors and outputs without terminating the turn
+- Our CLI prints error messages that are focused on delivering information to the agent so they can adjust their usage.
+- We use common formats and forward well-known output or error messages, e.g. we don't paraphrase git error messages but only add our own error messages before or after
+- We don't overwhelm with information by default, and additionally support common output control (--quiet, --verbose, --filter, --fields, ...) depending on the operation.
 
 ## 9. Open decisions
 
 - Persistence backend (SQL vs document store) for agent registry and thread logs.
 - Policy for automatic branch deletion post-merge (retain vs remove).
-- Metrics/telemetry events for state transitions.
 
-This specification should evolve alongside implementation changes; ensure `flock.md` links
-back to the sections above when describing CLI/API behavior.
+This specification should evolve alongside implementation changes; ensure `flock.md` links back to the sections above when describing CLI/API behavior.

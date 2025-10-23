@@ -6,12 +6,13 @@ and tag the release in the “Delivery notes” column.
 
 ## Release cadence & versioning
 
-- Flock uses semantic versioning (`MAJOR.MINOR.PATCH`). While all components share a single
-  version number, we allow rapid iteration—large `MINOR` or `PATCH` numbers (e.g.
-  `0.75.18`) are acceptable.
-- `MAJOR` increments signal breaking changes to the CLI or API.
-- `MINOR` increments add features or endpoint additions compatible with existing clients.
-- `PATCH` increments cover bug fixes or internal changes that do not affect contracts.
+- Flock uses Semantic Versioning (`MAJOR.MINOR.PATCH`) with compatibility measured from the
+  perspective of end users of the CLI and web app.
+- `MAJOR` increments signal breaking changes to user-facing behavior or contracts.
+- `MINOR` increments deliver new end-user capabilities while keeping existing commands and
+  flows intact.
+- `PATCH` increments capture fixes, polish, or internal work that does not affect
+  compatibility.
 
 The release script (`npm run release`) assists with preparing tagged releases and copying
 the development spec (`flock.md`) into the stable snapshot (`flock-stable.md`).
