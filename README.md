@@ -18,7 +18,7 @@ surface status updates without stitching together ad-hoc shell pipelines every t
 
 ## Quick Start
 
-1. Ensure Node.js ≥ 22 and npm ≥ 10 are installed. The repository is optimized for GitHub
+1. Ensure Node.js ≥ 22 and npm ≥ 9.8 are installed. The repository is optimized for GitHub
    Codespaces: a fresh Codespace already has the required toolchain and a globally linked
    `flock` binary.
 2. Clone the repository (rename to `flock` once the GitHub repo is updated) or open it in
@@ -67,8 +67,7 @@ interactive users and automated agents.
 
 ## Documentation Guide
 
-- `COLLABORATING.md` – contributor onboarding, coding standards, and development flows.
-- `AGENTS.md` – architecture, domain concepts, ontology, and roadmap for productive work.
+- `AGENTS.md` – unified onboarding for agents and collaborators plus key development flows.
 - `docs/` – ADRs, runbooks, and deep dives as the platform evolves.
 
-Ready to help? Start in `COLLABORATING.md`, then keep iterating—using Flock to build Flock. 🚀
+Ready to help? Start in `AGENTS.md`, then keep iterating—using Flock to build Flock. 🚀

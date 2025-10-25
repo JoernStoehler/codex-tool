@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
 import { TypeBoxTypeProvider, TypeBoxValidatorCompiler } from '@fastify/type-provider-typebox';
@@ -18,8 +19,10 @@ export interface BuildServerOptions {
 
 export type AppServer = ReturnType<typeof buildServer>;
 
+const moduleFilePath = fileURLToPath(import.meta.url);
 const defaultCounterDbPath =
-  process.env.COUNTER_DB_PATH ?? new URL('../data/counter.db', import.meta.url).pathname;
+  process.env.COUNTER_DB_PATH ??
+  fileURLToPath(new URL('../data/counter.db', import.meta.url));
 
 export function buildServer(options: BuildServerOptions = {}): AppServer {
   const server = Fastify({
@@ -148,7 +151,7 @@ export async function startServer(): Promise<AppServer> {
   return server;
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (process.argv[1] && process.argv[1] === moduleFilePath) {
   startServer().catch((error) => {
     // `startServer` already logged the error; this guard is defensive.
     console.error(error);

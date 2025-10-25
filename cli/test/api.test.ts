@@ -66,4 +66,26 @@ describe('api helpers', () => {
       'Request failed with status 500: boom'
     );
   });
+
+  it('returns undefined for empty successful responses', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(null, {
+        status: 204,
+        statusText: 'No Content'
+      })
+    );
+
+    await expect(apiGet<undefined>('health')).resolves.toBeUndefined();
+  });
+
+  it('returns plain text payloads when JSON is not provided', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(
+      new Response('pong', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+      })
+    );
+
+    await expect(apiGet<string>('health')).resolves.toBe('pong');
+  });
 });

@@ -120,10 +120,12 @@ function App(): ReactElement {
         <article className="card">
           <h2>How to interact</h2>
           <ol>
-            <li>Run <code>flock api dev</code> (or `npm run dev:api`) to start the API.</li>
             <li>
-              Run <code>flock cli dev</code> to rebuild the CLI and use{' '}
-              <code>npm run cli -- counter increment</code> to mutate the value.
+              Run <code>flock api dev</code> (or <code>npm run dev:api</code>) to start the API.
+            </li>
+            <li>
+              Run <code>npm run dev:cli</code> to rebuild the CLI and use{' '}
+              <code>npm run cli --workspaces=false -- counter increment</code> to mutate the value.
             </li>
             <li>
               Use <code>flock counter show</code> (global CLI) to read the value from the API.

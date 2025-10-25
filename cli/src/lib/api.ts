@@ -22,8 +22,20 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return (await response.json()) as T;
   }
 
-  // Fall back to text payloads.
-  return JSON.parse((await response.text()) || '{}') as T;
+  const text = await response.text();
+  if (!text) {
+    return undefined as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return text as unknown as T;
+    }
+
+    throw error;
+  }
 }
 
 export async function apiGet<T>(path: string): Promise<T> {

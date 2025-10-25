@@ -9,6 +9,7 @@
 /cli/dist/
 /web/dist/
 /web/.vite/
+/api/data/
 
 # env
 .env
@@ -39,4 +40,4 @@ coverage/
 # misc
 *.tgz
 *.tsbuildinfo
-
+*.db
