@@ -1,15 +1,8 @@
 # dependencies
 /node_modules/
-/api/node_modules/
-/cli/node_modules/
-/web/node_modules/
 
 # build output
-/api/dist/
-/cli/dist/
-/web/dist/
-/web/.vite/
-/api/data/
+# (no compiled outputs in scripts-first Swarm)
 
 # env
 .env
@@ -35,9 +28,11 @@ pnpm-debug.log*
 !.vscode/launch.json
 
 # coverage
-coverage/
+# (add if you add tests)
+# coverage/
 
 # misc
 *.tgz
-*.tsbuildinfo
+# TypeScript build info (legacy)
+# *.tsbuildinfo
 *.db

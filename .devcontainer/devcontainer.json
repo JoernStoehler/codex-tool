@@ -1,0 +1,20 @@
+// Dev Container for Swarm (Codespaces-friendly)
+// Uses the default GitHub Codespaces image (no custom image).
+{
+  "name": "Swarm Dev",
+  // Environment for the remote container session
+  "remoteEnv": {
+    "SWARM_HOME": "${containerEnv:HOME}/.config/swarm",
+    "SWARM_WORKTREE_ROOT": "/workspaces/swarm-worktrees",
+    "SWARM_TASKS_DIR": "${containerWorkspaceFolder}/tasks"
+  },
+  // Install tools and wire up the CLI after the container is created
+  "postCreateCommand": "bash -lc './.devcontainer/post-create.sh'",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

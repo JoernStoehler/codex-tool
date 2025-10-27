@@ -1,0 +1,14 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
+import sys, runpy
+from pathlib import Path
+
+SELF = Path(__file__).resolve()
+SWARM_DIR = SELF.parent.parent
+sys.path.insert(0, str(SWARM_DIR.parent))
+
+runpy.run_module("swarm.scripts", run_name="__main__")
+

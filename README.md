@@ -1,73 +1,55 @@
-# Flock
+# Swarm
 
-Flock is a command center for high-agency Codex automation. It wraps the Codex SDK, git,
-and day-to-day project management in a single toolkit that both humans and AI teammates
-can operate. Spin up coordinated workstreams, spawn new agents, manage backlogs, and
-surface status updates without stitching together ad-hoc shell pipelines every time.
+Swarm is an agent-first, script-driven skills pack for Codex automation. It favors
+deterministic CLIs over servers so both humans and AI teammates can operate
+reliably with clear, parseable outputs.
 
-> **We use Flock to build Flock.** Every surface is deterministic, non-interactive, and
-> produces structured output so agents can operate safely alongside humans.
+> This repo previously exposed API/CLI/Web under the name “Flock”. We have migrated to
+> Swarm (scripts-first) and removed the legacy API/CLI/Web.
 
-## Why Flock?
+## Why Swarm?
 
-- Launch API, CLI, and web surfaces with one-liners (`flock api dev`, `flock web dev`, …).
-- Standardize bash-first automation so workflows stay inspectable and replayable.
-- Allow agents to spawn subtasks, branch repos, and merge results safely.
-- Keep humans in the loop via live status streams, backlog views, and handoff prompts.
-- Build atop familiar, stable tech (Fastify, oclif, Vite/React) for painless adoption.
+- Scripts-first design: predictable, non-interactive commands with stable JSON output.
+- Easy adoption: copy `swarm/` into any repo.
+- Low friction: copy a folder, symlink one file; no server or packaging.
+- Human-friendly: readable logs, simple CLI flags, minimal dependencies.
 
 ## Quick Start
 
-1. Ensure Node.js ≥ 22 and npm ≥ 9.8 are installed. The repository is optimized for GitHub
-   Codespaces: a fresh Codespace already has the required toolchain and a globally linked
-   `flock` binary.
-2. Clone the repository (rename to `flock` once the GitHub repo is updated) or open it in
-   Codespaces.
-3. Run `npm install` in the repo root to hydrate all workspaces.
-4. Start any surface:
+1. Copy `swarm/` into your repo (or use it in-place).
+2. Symlink the CLI into your PATH (uv assumed installed):
 
-   ```sh
-   npm run dev:api   # Fastify API server
-   npm run dev:web   # React/Vite console
-   npm run dev:cli   # oclif CLI in watch mode
-   ```
+   chmod +x swarm/scripts/swarm-cli
+   mkdir -p ~/.local/bin
+   ln -sfn "$(pwd)/swarm/scripts/swarm-cli" ~/.local/bin/swarm-cli
 
-5. Validate with `npm run test --workspaces` and `npm run lint --workspaces`.
+3. Explore the CLI:
 
-With the API running, try `flock counter show` and `flock counter increment` (or their
-`npm run cli --workspaces=false -- counter …` equivalents) and watch the web console update
-live via server-sent events.
+   - `swarm-cli --help` (e.g., `swarm-cli echo hello`)
 
-When the CLI is published as `@flock/cli`, you can skip cloning and run:
-
-```sh
-npx flock api dev
-npx flock web dev -- --host 0.0.0.0
-```
-
-The CLI simply dispatches to the same workspace scripts, making it safe for both
-interactive users and automated agents.
+Codespaces (optional):
+- This repo provides `.devcontainer/devcontainer.json` which sets env defaults
+  (SWARM_HOME, SWARM_WORKTREE_ROOT, SWARM_TASKS_DIR), installs `uv`, and
+  symlinks `swarm-cli` automatically on create/rebuild via
+  `.devcontainer/post-create.sh`.
+- To change defaults, edit `.devcontainer/devcontainer.json` and/or
+  `.devcontainer/post-create.sh`, then rebuild the container.
 
 ## Operating Tips
 
 **AI agents**
 
-- Prefer the CLI façade (`flock …`) over bespoke shell sequences.
-- Surface blocking errors immediately; the CLI is designed to bubble up actionable
-  diagnostics for human reviewers.
-- The API exposes typed schemas for automation—see `AGENTS.md` for contracts and entities.
+- Prefer the provided CLIs over bespoke sequences.
+- Keep outputs deterministic and concise; print diagnostics to stderr.
 
 **Humans**
 
-- Lean on the CLI for quick routines, then open the web console for live coordination.
-- Bash helpers live in `scripts/` and are intentionally simple; compose them for custom
-  operations or CI workflows.
-- Hand off work to agents by recording context in the backlog endpoints (documented in
-  `AGENTS.md`).
+- Use the small uv+Python CLI under `swarm/scripts`.
+- Prefer `--output-format jsonl` for machine chaining (e.g., with jq) when needed.
 
 ## Documentation Guide
 
-- `AGENTS.md` – unified onboarding for agents and collaborators plus key development flows.
-- `docs/` – ADRs, runbooks, and deep dives as the platform evolves.
+- `AGENTS.md` – onboarding and collaboration guide.
+- `swarm/SKILL.md` – how to install and use the Swarm CLI.
 
-Ready to help? Start in `AGENTS.md`, then keep iterating—using Flock to build Flock. 🚀
+Ready to help? Start in `AGENTS.md`, then keep iterating—using Swarm to build Swarm. 🚀
